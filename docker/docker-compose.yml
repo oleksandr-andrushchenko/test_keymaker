@@ -1,0 +1,40 @@
+version: '3.6'
+ 
+services:
+  php-fpm:
+    build:
+      context: ./php-fpm
+      args:
+        PHP_USER_ID: ${PHP_USER_ID}
+        PHP_GROUP_ID: ${PHP_GROUP_ID}
+    env_file:
+      - ./.env
+    volumes:
+      - ../:/var/www
+    depends_on:
+      - mariadb
+    ports:
+      - 9001:9000
+
+  mariadb:
+    build:
+      context: ./mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - ./mariadb/dump.sql:/docker-entrypoint-initdb.d/dump.sql
+    ports:
+      - 3307:3306
+
+  nginx:
+    build:
+      context: ./nginx
+    volumes:
+      - ../public:/var/www/public
+    depends_on:
+      - php-fpm
+    ports:
+      - 81:80
