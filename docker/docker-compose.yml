@@ -33,7 +33,7 @@ services:
     build:
       context: ./nginx
     volumes:
-      - ../public:/var/www/public
+      - ../:/var/www
     depends_on:
       - php-fpm
     ports:
