@@ -3,9 +3,14 @@
 require __DIR__ . '/../vendor/autoload.php';
 
 use App\SimpleApp;
-use App\Provider\Md5Provider as Provider;
 
-$app = new SimpleApp(Provider::class);
+use App\Provider\IdProvider;
+use App\Provider\Md5Provider;
+use App\Provider\ComplexProvider;
+
+use App\Provider\ComplexProvider as SimpleProvider;
+
+$app = new SimpleApp($_GET['provider'] ?? SimpleProvider::class);
 
 //on index
 $app->addRoute(function (string $method, string $path, array $params) use ($app) {
@@ -37,7 +42,7 @@ $app->addRoute(function (string $method, string $path, array $params) use ($app)
     <tr><td>URL</td><td>$url</td></tr>    
     <tr><td>PROVIDER</td><td>{$app->getProviderClass()}</td></tr>    
     <tr><td>SHORT CODE</td><td>{$code}</td></tr>    
-    <tr><td>LINK</td><td><a href="/$code" target="_blank">/$code</a></td></tr>    
+    <tr><td>LINK</td><td><a href="/$code?provider={$app->getProviderClass()}" target="_blank">/$code</a></td></tr>    
 </table>
 <a href="/">go to index</a>
 HTML;
@@ -53,7 +58,7 @@ $app->addRoute(function (string $method, string $path) use ($app) {
                 return $peaces[0];
             }
 
-            $app->terminate(400, 'Bad Request');
+            return false;
         }
 
         $app->terminate(404, 'Not Found');
@@ -62,7 +67,46 @@ $app->addRoute(function (string $method, string $path) use ($app) {
     return false;
 }, function (string $shortCode) use ($app) {
     $url = $app->getProvider()->getUrlByShortCode($shortCode);
-    header('Location: ' . $url, true, 302);
+
+    if ($url) {
+        header('Location: ' . $url, true, 302);
+    } else {
+        $app->terminate(404, 'Not Found');
+    }
+});
+
+//bench
+$app->addRoute(function (string $method, string $path) {
+    return 'GET' == $method && '/bench' == $path;
+}, function () use ($app) {
+    foreach ([
+                 IdProvider::class,
+                 Md5Provider::class,
+                 ComplexProvider::class
+             ] as $provider) {
+        $start = microtime(true);
+
+        for ($i = 0, $l = 100; $i < $l; $i++) {
+            file_get_contents('http://172.21.0.11/?provider=' . urlencode($provider) . '&url=' . urlencode('http://qwe.com/' . $i));
+        }
+
+        for ($i = 0, $l = 1000; $i < $l; $i++) {
+            file_get_contents('http://172.21.0.11:81/' . md5('http://qwe.com/' . $i) . '?provider=' . urlencode($provider));
+        }
+
+        echo $provider . ':';
+        echo '<br>';
+        echo (microtime(true) - $start) . 'sec';
+        echo '<br>';
+        echo '<br>';
+    }
+});
+
+//php
+$app->addRoute(function (string $method, string $path) {
+    return 'GET' == $method && '/php' == $path;
+}, function () use ($app) {
+    phpinfo();
 });
 
 //default
