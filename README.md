@@ -1,8 +1,8 @@
 ## Install
 
-* **cd docker*
-* **make start*
-* **visit http://localhost:81*
+* *cd docker*
+* *make start*
+* *visit http://localhost:81*
 
 ## Changelog
 
@@ -15,3 +15,7 @@
     * queues for inserts
     * key-value engine for selects
 
+* **v1.0.2 (draft)**
+    * make it more configurable (hosts, ports)
+    * add unit-/func-tests
+    * add statistic: counters, last_visit etc...
