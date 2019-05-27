@@ -1,27 +1,35 @@
 FROM php:fpm-alpine
 
-ARG PHP_USER_ID=1000
-ARG PHP_GROUP_ID=1000
+RUN docker-php-ext-install pdo_mysql bcmath
 
-RUN docker-php-ext-install pdo_mysql
+ENV BUILD_DEPS autoconf gcc cmake g++ make
 
-RUN export COMPOSER_ALLOW_SUPERUSER=1
+RUN apk update && apk add --no-cache --virtual .build-deps $BUILD_DEPS
 
-RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && \
-    php composer-setup.php --filename=composer --install-dir=/usr/local/bin/ && \
-    php -r "unlink('composer-setup.php');"
+# Install igbinary
+RUN pecl install igbinary \
+    && rm -rf /tmp/pear \
+    && docker-php-ext-enable igbinary \
+    && php -m | grep igbinary
+
+# Install redis driver
+RUN mkdir -p /tmp/pear \
+    && cd /tmp/pear \
+    && pecl bundle redis \
+    && cd redis \
+    && phpize . \
+    && ./configure --enable-redis-igbinary \
+    && make \
+    && make install \
+    && cd ~ \
+    && rm -rf /tmp/pear \
+    && docker-php-ext-enable redis \
+    && php -m | grep redis
+
+# Remove builddeps
+RUN apk del .build-deps
 
 COPY ./fpm.conf /usr/local/etc/php-fpm.d
 COPY ./php.ini /usr/local/etc/php/php.ini
 
-RUN apk --no-cache add shadow && \
-    usermod -u $PHP_USER_ID www-data && \
-    groupmod -g $PHP_GROUP_ID www-data
-
-USER www-data
-
-WORKDIR /var/www
-
 CMD ["php-fpm", "--nodaemonize"]
-
-EXPOSE 9000
