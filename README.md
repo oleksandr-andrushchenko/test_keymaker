@@ -11,7 +11,7 @@
     * id provider
     * md5 provider
     
-* **v1.0.1 (draft)**
-    * queues for generating
-    * search/cache engine for searching
+* **v1.0.1**
+    * queues for inserts
+    * key-value engine for selects
 
