@@ -3,10 +3,12 @@
 namespace App;
 
 use PDO;
+use Predis\Client;
 
 class SimpleApp
 {
     private $db;
+    private $redis;
     private $providerClass;
     private $provider;
     private $routes = [];
@@ -32,6 +34,19 @@ class SimpleApp
         }
 
         return $this->db;
+    }
+
+    public function getRedis(): Client
+    {
+        if (null === $this->redis) {
+            $this->redis = new Client([
+                'scheme' => 'tcp',
+                'host'   => 'redis',
+                'port'   => 6379,
+            ]);
+        }
+
+        return $this->redis;
     }
 
     public function getProvider(): Provider
