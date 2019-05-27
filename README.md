@@ -14,6 +14,7 @@
 * **v1.0.1**
     * queues for inserts
     * key-value engine for selects
+    * complex provider
 
 * **v1.0.2 (draft)**
     * make it more configurable (hosts, ports)
